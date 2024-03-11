@@ -1,0 +1,733 @@
+<template>
+  <div class="fullHeight">
+    <v-card
+      class="heightFull"
+      style="border-radius: 10px; border: 1px solid #dce5ef"
+      elevation="0"
+    >
+      <v-card-title class="px-4 py-3">
+        <span class="headerTitle mb-2">{{ $t("joint_venture.index") }}</span>
+        <div class="headerSearch d-flex align-center">
+          <v-text-field
+            v-model="search"
+            append-icon="mdi-magnify"
+            class="txt_search1"
+            style="width: 100px !important"
+            :placeholder="$t('search')"
+            @keyup.native.enter="getList"
+            dense
+            hide-details
+            solo
+          ></v-text-field>
+          <v-btn class="filterBtn px-2" style="background: #fff; height: 34px;">
+              <v-icon color="#00B950" left>mdi-filter-outline</v-icon>Фильтр
+            </v-btn>
+            <v-btn class="filterBtn px-2" style="background: #fff; height: 34px;">
+              Столбцы <v-icon color="#00B950" right>mdi-checkbox-marked-outline</v-icon>
+            </v-btn>
+          <v-menu
+            transition="slide-y-transition"
+            left
+            
+            :close-on-content-click="false"
+            :nudge-width="50"
+            offset-y
+          >
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn
+                class="txt_searchBtn ml-2"
+                outlined
+                v-bind="attrs"
+                v-on="on"
+              >
+                <v-icon size="18" color="white"
+                  >mdi-format-list-bulleted</v-icon
+                >
+              </v-btn>
+            </template>
+            <v-card>
+              <v-list class="dropdown-list pa-0">
+                <v-list-item
+                  v-if="$store.getters.checkPermission('joint_venture-create')"
+                  style="margin: 0px; max-height: 34px; min-height: 34px"
+                  @click="newItem"
+                >
+                  <v-list-item-title>
+                    <v-icon size="18">mdi-plus</v-icon>Добавить новую строку
+                  </v-list-item-title>
+                </v-list-item>
+                <v-list-item
+                  style="margin: 0px; max-height: 34px; min-height: 34px"
+                  @click="0"
+                >
+                  <v-list-item-title
+                    @click="
+                      getDocsheetsExcel(1);
+                      punkt_excel = [];
+                    "
+                  >
+                    <v-icon color="#107C41" size="18"
+                      >mdi-microsoft-excel</v-icon
+                    >
+                    Скачать таблицу Excel
+                  </v-list-item-title></v-list-item
+                >
+              </v-list>
+            </v-card>
+          </v-menu>
+        </div>
+      </v-card-title>
+      <v-row class="mx-0">
+        <v-col class="ma-0 pa-0" xs="12">
+          <v-data-table
+            class="doc-template_data-table"
+            dense
+            style="width: 100%; height: 100%; border-radius: 10px"
+            fixed-header
+            :loading-text="$t('loadingText')"
+            :no-data-text="$t('noDataText')"
+            :height="screenHeight"
+            :loading="loading"
+            :headers="headers"
+            :items="items"
+            item-key="id"
+            :server-items-length="server_items_length"
+            :options.sync="dataTableOptions"
+            :disable-pagination="true"
+            :footer-props="{
+              itemsPerPageOptions: [20, 50, 100],
+              itemsPerPageAllText: $t('itemsPerPageAllText'),
+              itemsPerPageText: $t('itemsPerPageText'),
+              showFirstLastPage: true,
+              firstIcon: 'mdi-arrow-collapse-left',
+              lastIcon: 'mdi-arrow-collapse-right',
+              prevIcon: 'mdi-arrow-left',
+              nextIcon: 'mdi-arrow-right',
+            }"
+            @update:page="updatePage"
+            @update:items-per-page="updatePerPage"
+          >
+            <template v-slot:item.id="{ item }">{{
+              items
+                .map(function (x) {
+                  return x.id;
+                })
+                .indexOf(item.id) + from
+            }}</template>
+            <template v-slot:item.manager_fio="{ item }">
+                {{
+                  item.employee
+                    ? $i18n.locale == "uz_latin"
+                      ? item.employee["firstname_uz_latin"]
+                      : item.employee["firstname_uz_cyril"]
+                    : ""
+                }}
+                {{
+                  item.employee
+                    ? $i18n.locale == "uz_latin"
+                      ? item.employee["lastname_uz_latin"]
+                      : item.employee["lastname_uz_cyril"]
+                    : ""
+                }}
+                {{
+                  item.employee
+                    ? $i18n.locale == "uz_latin"
+                      ? item.employee["middlename_uz_latin"]
+                      : item.employee["middlename_uz_cyril"]
+                    : ""
+                }}
+            </template>
+
+            <template v-slot:item.actions="{ item }">
+              <v-btn
+                v-if="$store.getters.checkPermission('joint_venture-update')"
+                class="pl-0 pr-2"
+                color="blue"
+                style="min-width: 25px"
+                small
+                icon
+                @click="editItem(item)"
+              >
+                <v-icon size="18">mdi-pencil</v-icon>
+              </v-btn>
+              <v-btn
+                v-if="$store.getters.checkPermission('joint_venture-delete')"
+                class="pl-0 pr-2"
+                color="error"
+                style="min-width: 25px"
+                small
+                icon
+                @click="deleteItem(item)"
+              >
+                <v-icon size="18">mdi-trash-can-outline</v-icon>
+              </v-btn>
+            </template>
+          </v-data-table>
+        </v-col>
+      </v-row>
+    </v-card>
+
+    <v-dialog
+      v-model="editDialog"
+      @keydown.esc="editDialog = false"
+      persistent
+      max-width="900"
+    >
+      <v-card class="pa-5">
+        <v-card-title class="pa-0" primary-title>
+          <span class="dialogTitle">{{ textDialogHeader }}</span>
+        </v-card-title>
+        <v-divider color="#DCE5EF" class="my-1"></v-divider>
+        <v-form @keyup.native.enter="save" ref="dialogForm">
+          <v-card-text class="py-0">
+            <v-row class="mx-0 dialogForm">
+              <v-col cols="12" md="6" lg="4" class="px-1 py-0 mb-3">
+                <v-text-field
+                  :label="$t('name_uz_latin')"
+                  v-model="form.department.name_uz_latin"
+                  :rules="[(v) => !!v || $t('input_required')]"
+                  hide-details
+                  dense
+                  outlined
+                  class="mt-1"
+                ></v-text-field>
+              </v-col>
+              <v-col cols="12" md="6" lg="4" class="px-1 py-0 mb-3">
+                <v-text-field
+                  :label="$t('name_uz_cyril')"
+                  v-model="form.department.name_uz_cyril"
+                  :rules="[(v) => !!v || $t('input_required')]"
+                  hide-details
+                  dense
+                  outlined
+                  class="mt-1"
+                ></v-text-field>
+              </v-col>
+              <v-col cols="12" md="6" lg="4" class="px-1 py-0 mb-3">
+                <v-text-field
+                  :label="$t('name_ru')"
+                  v-model="form.department.name_ru"
+                  :rules="[(v) => !!v || $t('input_required')]"
+                  hide-details
+                  dense
+                  outlined
+                  class="mt-1"
+                ></v-text-field>
+              </v-col>
+              <v-col cols="12" md="6" lg="4" class="px-1 py-0 mb-3">
+                <v-text-field
+                  :label="$t('department.department_code')"
+                  v-model="form.department.department_code"
+                  :rules="[(v) => !!v || $t('input_required')]"
+                  hide-details
+                  dense
+                  outlined
+                  class="mt-1"
+                ></v-text-field>
+              </v-col>
+              <v-col cols="12" md="6" lg="4" class="px-1 py-0 mb-3">
+                <v-autocomplete
+                  :label="$t('department.department_type_id')"
+                  clearable
+                  v-model="form.department.department_type_id"
+                  :items="departmentTypes"
+                  item-value="id"
+                  :item-text="'name_' + $i18n.locale"
+                  :rules="[(v) => !!v || $t('input.required')]"
+                  hide-details
+                  dense
+                  outlined
+                  class="mt-1"
+                >
+                </v-autocomplete>
+              </v-col>
+              <v-col cols="12" md="6" lg="4" class="px-1 py-0 mb-3">
+                <v-autocomplete
+                  :label="$t('positions.index')"
+                  class="mt-1"
+                  clearable
+                  v-model="form.position_id"
+                  :items="positions"
+                  item-value="id"
+                  :item-text="'name_' + $i18n.locale"
+                  :rules="[(v) => !!v || $t('input.required')]"
+                  hide-details
+                  dense
+                  outlined
+                >
+                </v-autocomplete>
+              </v-col>
+              <v-col cols="12" md="6" lg="4" class="px-1 py-0 mb-3">
+                <v-autocomplete
+                  :label="$t('countries.index')"
+                  class="mt-1"
+                  clearable
+                  v-model="form.department.country_id"
+                  :items="countries"
+                  item-value="id"
+                  :item-text="'name_' + $i18n.locale"
+                  :rules="[(v) => !!v || $t('input.required')]"
+                  hide-details
+                  dense
+                  outlined
+                >
+                </v-autocomplete>
+              </v-col>
+              <v-col cols="12" md="6" lg="4" class="px-1 py-0 mb-3">
+                <v-autocomplete
+                  :label="$t('regions.index')"
+                  class="mt-1"
+                  clearable
+                  v-model="form.department.region_id"
+                  :items="
+                    countries.find((v) => {
+                      if (v.id == form.department.country_id) return v;
+                    })
+                      ? countries.find((v) => {
+                          if (v.id == form.department.country_id) return v;
+                        }).regions
+                      : []
+                  "
+                  item-value="id"
+                  :item-text="'name_' + $i18n.locale"
+                  :rules="[(v) => !!v || $t('input.required')]"
+                  hide-details
+                  dense
+                  outlined
+                >
+                </v-autocomplete>
+              </v-col>
+            </v-row>
+          </v-card-text>
+          <v-system-bar class="pa-1 mb-3 justify-center" color="grey lighten-4">
+            {{ $t("joint_venture.manager") }}
+          </v-system-bar>
+          <v-card-text class="py-0">
+            <v-row class="mx-0 dialogForm">
+              <v-col cols="12" md="6" lg="4" class="px-1 py-0 mb-3">
+                <v-text-field
+                  :label="$t('employee.firstname_uz_latin')"
+                  v-model="form.employee.firstname_uz_latin"
+                  :rules="[(v) => !!v || $t('input_required')]"
+                  hide-details
+                  dense
+                  outlined
+                  class="mt-1"
+                ></v-text-field>
+              </v-col>
+              <v-col cols="12" md="6" lg="4" class="px-1 py-0 mb-3">
+                <v-text-field
+                  :label="$t('employee.firstname_uz_cyril')"
+                  v-model="form.employee.firstname_uz_cyril"
+                  :rules="[(v) => !!v || $t('input_required')]"
+                  hide-details
+                  dense
+                  outlined
+                  class="mt-1"
+                ></v-text-field>
+              </v-col>
+              <v-col cols="12" md="6" lg="4" class="px-1 py-0 mb-3">
+                <v-text-field
+                  :label="$t('employee.lastname_uz_latin')"
+                  v-model="form.employee.lastname_uz_latin"
+                  :rules="[(v) => !!v || $t('input_required')]"
+                  hide-details
+                  dense
+                  outlined
+                  class="mt-1"
+                ></v-text-field>
+              </v-col>
+              <v-col cols="12" md="6" lg="4" class="px-1 py-0 mb-3">
+                <v-text-field
+                  :label="$t('employee.lastname_uz_cyril')"
+                  v-model="form.employee.lastname_uz_cyril"
+                  :rules="[(v) => !!v || $t('input_required')]"
+                  hide-details
+                  dense
+                  outlined
+                  class="mt-1"
+                ></v-text-field>
+              </v-col>
+              <v-col cols="12" md="6" lg="4" class="px-1 py-0 mb-3">
+                <v-text-field
+                  :label="$t('employee.middlename_uz_latin')"
+                  v-model="form.employee.middlename_uz_latin"
+                  hide-details
+                  dense
+                  outlined
+                  class="mt-1"
+                ></v-text-field>
+              </v-col>
+              <v-col cols="12" md="6" lg="4" class="px-1 py-0 mb-3">
+                <v-text-field
+                  :label="$t('employee.middlename_uz_cyril')"
+                  v-model="form.employee.middlename_uz_cyril"
+                  hide-details
+                  dense
+                  outlined
+                  class="mt-1"
+                ></v-text-field>
+              </v-col>
+              <v-col cols="12" md="6" lg="4" class="px-1 py-0 mb-3">
+                <v-text-field
+                  :label="$t('employee.tabel')"
+                  v-model="form.employee.tabel"
+                  :rules="[(v) => !!v || $t('input_required')]"
+                  hide-details
+                  type="email"
+                  dense
+                  outlined
+                  class="mt-1"
+                ></v-text-field>
+              </v-col>
+              <v-col cols="12" md="6" lg="4" class="px-1 py-0 mb-3">
+                <v-text-field
+                  :label="$t('user.email')"
+                  v-model="form.employee.user.email"
+                  :rules="[(v) => !!v || $t('input_required')]"
+                  hide-details
+                  type="email"
+                  dense
+                  outlined
+                  class="mt-1"
+                ></v-text-field>
+              </v-col>
+              <v-col cols="12" md="6" lg="4" class="px-1 py-0 mb-3">
+                <v-text-field
+                  :label="$t('user.phone')"
+                  v-model="form.employee.phone_number"
+                  :rules="[(v) => !!v || $t('input_required')]"
+                  hide-details
+                  dense
+                  outlined
+                  class="mt-1"
+                ></v-text-field>
+              </v-col>
+            </v-row>
+            <small color="red">{{ $t("input_required") }}</small>
+          </v-card-text>
+        </v-form>
+        <v-card-actions class="pa-0 mt-5">
+          <v-spacer></v-spacer>
+          <v-btn
+            class="mr-3"
+            color="#3FCB5D"
+            right
+            small
+            dark
+            @click="save"
+            elevation="0"
+            style="text-transform: none; border-radius: 5px; padding: 5px 20px"
+          >
+            {{ $t("save") }}
+          </v-btn>
+          <v-btn
+            class=""
+            color="red"
+            right
+            small
+            dark
+            @click="editDialog = false"
+            elevation="0"
+            style="text-transform: none; border-radius: 5px; padding: 5px 20px"
+          >
+            {{ $t("Отменить") }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog v-model="loading" width="300" hide-overlay>
+      <v-card color="primary" dark>
+        <v-card-text>
+          {{ $t("loadingText") }}
+          <v-progress-linear
+            indeterminate
+            color="white"
+            class="mb-0"
+          ></v-progress-linear>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+  </div>
+</template>
+
+<script>
+const axios = require("axios").default;
+import Swal from "sweetalert2";
+export default {
+  data() {
+    return {
+      loading: false,
+      editDialog: false,
+      items: [],
+      form: {
+        department: {
+          id: Date.now(),
+        },
+        employee: {
+          id: Date.now(),
+          user: { id: Date.now() },
+        },
+      },
+      page: 1,
+      from: 1,
+      server_items_length: -1,
+      dataTableOptions: { page: 1, itemsPerPage: 20 },
+      departmentTypes: [],
+      textDialogHeader: "",
+      countries: [],
+    };
+  },
+  computed: {
+    screenHeight() {
+      return window.innerHeight - 170;
+    },
+    headers() {
+      return [
+        { text: "#", value: "id", align: "center", width: 30, sortable: false },
+        {
+          text: this.$t("joint_venture.name"),
+          value: "department.name_" + this.$i18n.locale,
+          sortable: false,
+        },
+        {
+          text: this.$t("joint_venture.manager_fio"),
+          value: "manager_fio",
+          sortable: false,
+        },
+        {
+          text: this.$t("employee.tabel"),
+          value: "employee.tabel",
+          sortable: false,
+        },
+        {
+          text: this.$t("employee.phone"),
+          value: "employee.phone_number",
+          sortable: false,
+        },
+        {
+          text: this.$t("user.username"),
+          value: "employee.user.username",
+          sortable: false,
+        },
+        {
+          text: this.$t("user.email"),
+          value: "employee.user.email",
+          sortable: false,
+        },
+        {
+          text: this.$t("actions"),
+          value: "actions",
+          width: 50,
+          align: "center",
+          sortable: false,
+        },
+      ];
+    },
+  },
+  methods: {
+    updatePage($event) {
+      this.getList();
+    },
+    updatePerPage($event) {
+      this.getList();
+    },
+    getList() {
+      this.loading = true;
+      axios
+        .post(this.$store.state.backend_url + "api/joint-venture/list", {
+          pagination: this.dataTableOptions,
+        })
+        .then((res) => {
+          this.items = res.data.data;
+          this.items.map((v) => {
+            v.employee = v.employees[0];
+            v.employee.phone_number =
+              v.employee.employee_phones[0].phone_number;
+            v.department.country_id = v.department.joint_company.country_id;
+            v.department.region_id = v.department.joint_company.region_id;
+          });
+          this.from = res.data.from;
+          this.server_items_length = res.data.total;
+          this.loading = false;
+          //   console.log(res);
+        })
+        .catch((err) => {
+          console.log(err);
+          this.loading = false;
+        });
+    },
+    departmentTypeJointVenture() {
+      axios
+        .get(
+          this.$store.state.backend_url +
+            "api/department-type-joint-venture/list"
+        )
+        .then((res) => {
+          this.departmentTypes = res.data.department_type;
+          this.countries = res.data.countries;
+          this.positions = res.data.positions;
+          //   console.log(res);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    },
+    newItem() {
+      this.editDialog = true;
+      this.textDialogHeader = this.$t("joint_venture.create");
+      this.form = {
+        department: {
+          id: Date.now(),
+        },
+        employee: {
+          id: Date.now(),
+          user: { id: Date.now() },
+        },
+      };
+    },
+    editItem(item) {
+      this.form = item;
+      this.editDialog = true;
+      this.textDialogHeader = this.$t("joint_venture.edit");
+      console.log(item);
+    },
+    save() {
+      if (this.$refs.dialogForm.validate()) {
+        this.loading = true;
+        this.editDialog = false;
+        axios
+          .post(
+            this.$store.state.backend_url + "api/joint-venture/update",
+            this.form
+          )
+          .then((res) => {
+            // this.departmentTypes = res.data;
+            // console.log(res);
+            this.$refs.dialogForm.reset();
+            this.getList();
+            this.loading = false;
+          })
+          .catch((err) => {
+            console.log(err);
+            this.loading = false;
+          });
+      }
+    },
+    validatUsername(text, text1, text2) {
+      alert(text1.substr(0, 1));
+      this.form.employee.user.username =
+        text.substr(0, 1) + text1.substr(0, 1) + text2;
+    },
+  },
+  mounted() {
+    this.getList();
+    this.departmentTypeJointVenture();
+  },
+};
+</script>
+<style scoped>
+.doc-template_data-table table > tbody > tr > td {
+  white-space: normal;
+  max-width: 50px;
+  height: 43px;
+  margin: 0 auto;
+  font-size: 14px;
+  line-height: 1.4;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fullHeight {
+  height: calc(100% - 0px);
+}
+.heightFull {
+  height: 100%;
+  background: #fff;
+}
+.headerTitle {
+  width: 100%;
+  color: #000;
+  font-size: 18px;
+  line-height: 1.4;
+  font-weight: 500;
+  font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.dialogTitle {
+  color: #000;
+  font-size: 16px;
+  line-height: 1.4;
+  font-weight: 500;
+  font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.labelTitle {
+  color: #676768;
+  font-size: 12px;
+  font-weight: 400;
+  font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.headerSearch {
+  width: 100%;
+  height: 34px;
+}
+.txt_search1 {
+  border: 1px solid #e6e6e6;
+  box-shadow: none;
+  max-height: 100%;
+  overflow: hidden;
+  border-radius: 5px 0px 0px 5px;
+  color: #212529;
+  font-size: 12px;
+  font-weight: 400;
+  font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.txt_searchBtn {
+  background: #ff9f0e;
+  border: 0.2px rgba(0, 0, 0, 0.28) solid;
+  box-shadow: none;
+  min-width: 25px !important;
+  height: 34px !important;
+  border-radius: 1px;
+  width: 25px;
+  padding: 0 13px;
+}
+.filterBtn {
+  color: #000;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  border: 1px solid #e6e6e6;
+  /* border-right: 0px; */
+  border-left: 0px;
+  background: #fff;
+  box-shadow: none;
+  border-radius: 0;
+  text-transform: none;
+}
+.v-data-table {
+  line-height: 13px !important;
+}
+.doc-template_data-table > .v-data-table__wrapper > table > tbody > tr > td {
+  color: #676768;
+  font-size: 12px;
+  font-weight: 400;
+  font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.dropdown-list .v-list-item .v-list-item__title {
+  color: #000;
+  font-size: 12px;
+  font-weight: 400;
+  font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.dialog-head_title {
+  color: #000;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.v-dialog > .v-card > .v-card__text {
+  padding: 0px 0px 0px 0px;
+}
+</style>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg enable-background="new 0 0 512 512" xmlns="http://www.w3.org/2000/svg" xmlns:bx="https://boxy-svg.com">
+  <defs>
+    <radialGradient gradientUnits="userSpaceOnUse" cx="107.552" cy="77.287" r="90.674" id="gradient-0" gradientTransform="matrix(1, 0, 0, 1, 133.989668, 363.686264)">
+      <stop offset="0" style="stop-color: #bada55"/>
+      <stop offset="1" style="stop-color: #758d29"/>
+    </radialGradient>
+    <radialGradient gradientUnits="userSpaceOnUse" cx="107.552" cy="77.287" r="90.674" id="gradient-1" gradientTransform="matrix(1, 0, 0, 1, 108.467831, 111.658072)">
+      <stop offset="0" style="stop-color: #bada55"/>
+      <stop offset="1" style="stop-color: #758d29"/>
+    </radialGradient>
+    <filter id="drop-shadow-filter-0" color-interpolation-filters="sRGB" x="-50%" y="-50%" width="200%" height="200%" bx:preset="drop-shadow 1 1 5 0 0.5 rgba(0,0,0,0.3)">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="0"/>
+      <feOffset dx="1" dy="5"/>
+      <feComponentTransfer result="offsetblur">
+        <feFuncA id="spread-ctrl" type="linear" slope="1"/>
+      </feComponentTransfer>
+      <feFlood flood-color="rgba(0,0,0,0.3)"/>
+      <feComposite in2="offsetblur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <path d="M 135.882 300.24 L 188.882 300.24 L 188.882 478.444 L 135.882 478.444 L 135.882 300.24 Z" fill="#2e4356" class="fill-2e4356" style=""/>
+  <path d="M 73.965 300.473 L 126.965 300.473 L 126.965 478.973 L 73.965 478.973 L 73.965 300.473 Z" fill="#cce134" class="fill-cce134" style=""/>
+  <path d="M 194.71 300.217 L 247.71 300.217 L 247.71 478.444 L 194.71 478.444 L 194.71 300.217 Z" fill="#f4908c" class="fill-f4908c" style=""/>
+  <path d="M 251.842 300.499 L 304.842 300.499 L 304.842 477.917 L 251.842 477.917 L 251.842 300.499 Z" fill="#fbd502" class="fill-fbd502" style=""/>
+  <path d="M 311.438 299.665 L 364.438 299.665 L 364.438 478.027 L 311.438 478.027 L 311.438 299.665 Z" class="fill-fbd502" style="fill: rgb(251, 2, 205);"/>
+  <path d="M 372.052 299.333 L 425.052 299.333 L 425.052 477.415 L 372.052 477.415 L 372.052 299.333 Z" class="fill-fbd502" style="stroke-linecap: round; stroke: rgb(167, 204, 42); fill: rgb(40, 21, 209);"/>
+  <text style="fill: url('#gradient-0'); font-family: Arial, sans-serif; font-size: 54px; font-weight: 700; letter-spacing: -1.3px; stroke-linejoin: round; text-anchor: middle; word-spacing: 8px; white-space: pre; mix-blend-mode: screen;" x="241.434" y="459.716">UzAuto</text>
+  <text style="fill: url('#gradient-1'); fill-rule: evenodd; font-family: Arial, sans-serif; font-size: 54px; font-weight: 700; letter-spacing: -1.3px; stroke-linejoin: bevel; stroke-opacity: 0.27; text-anchor: middle; word-spacing: 8px; white-space: pre; filter: url('#drop-shadow-filter-0');" x="215.913" y="207.688">KPI</text>
+</svg>

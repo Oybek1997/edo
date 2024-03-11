@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<script>
+    window.onload = function() {
+        var vars = {};
+        var x = document.location.search.substring(1).split('&');
+        for (var i in x) {
+            var z = x[i].split('=', 2);
+            vars[z[0]] = z[1];
+        }
+        //if current page number == last page number, vars['topage']
+
+        var isp=decodeURI(vars['data1']).replace(/[_]/g,' ');
+        //var data4=(decodeURI(vars['data4'])).replace(/[_]/g,' ');
+        var data4=decodeURI((vars['data4'])).replace(/rushotka/g,'#').replace(/plus/g,'+').replace(/[_]/g,' ');
+        var data5=decodeURI(vars['data5']).replace(/[_]/g,' ');
+
+        if (vars['page'] == vars['topage'] && vars['data1']) {
+            document.querySelectorAll('.extra')[0].textContent = '';
+            document.querySelectorAll('.extra1')[0].textContent = 'Исп.: '+isp;
+            document.querySelectorAll('.extra2')[0].textContent = 'Тел.: '+data4;
+        }
+        else {
+            document.querySelectorAll('.extra')[0].textContent = '';
+            document.querySelectorAll('.extra1')[0].textContent = '';
+            document.querySelectorAll('.extra2')[0].textContent = '';
+        }
+    };
+</script>
+
+<style>
+    .extra1, .extra2 {
+        margin-left:100px;
+    }
+</style>
+<div  class="extra">
+<img width="100%" src="https://edo.uzavtosanoat.uz/img/uzauto_footer.jpg">
+</div>
+<div  class="extra1">
+    
+</div>
+<div  class="extra2">
+    
+</div>

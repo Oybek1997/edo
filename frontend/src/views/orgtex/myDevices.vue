@@ -1,0 +1,676 @@
+<template>
+  <div class="fullHeight">
+    <v-card 
+      class="heightFull"
+      style="border-radius: 10px; border: 1px solid #dce5ef"
+      elevation="0"
+    >
+      <v-card-title class="px-4 py-3">
+        <span class="headerTitle mb-2">{{ $t("device.my") }}</span>
+        <div class="headerSearch d-flex align-center">
+          <v-text-field
+            class="txt_search1"
+            v-model="search"
+            prepend-inner-icon="mdi-magnify"
+            style="width: 100px !important"
+            :placeholder="$t('search')"
+            @keyup.native.enter="getList"
+            dense
+            hide-details
+            solo
+          ></v-text-field>
+          <v-btn class="filterBtn px-2" style="background: #fff; height: 34px;">
+            <v-icon color="#00B950" left>mdi-filter-outline</v-icon>Фильтр
+          </v-btn>
+          <v-btn class="filterBtn px-2" style="background: #fff; height: 34px;">
+              Столбцы <v-icon color="#00B950" right>mdi-checkbox-marked-outline</v-icon>
+          </v-btn>
+          <v-menu
+            transition="slide-y-transition"
+            left
+            
+            :close-on-content-click="false"
+            :nudge-width="50"
+            offset-y
+          >
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn
+                class="txt_searchBtn ml-2"
+                outlined
+                v-bind="attrs"
+                v-on="on"
+              >
+                <v-icon size="18" color="white"
+                  >mdi-format-list-bulleted</v-icon
+                >
+              </v-btn>
+            </template>
+            <v-card>
+              <v-list class="dropdown-list pa-0">
+                <v-list-item
+                  style="margin: 0px; max-height: 34px; min-height: 34px"
+                  @click="0"
+                >
+                  <v-list-item-title
+                  @click="tableToExcel('table', 'Lorem Table')"
+                  >
+                    <v-icon color="#107C41" size="18"
+                      >mdi-microsoft-excel</v-icon
+                    >
+                    Скачать таблицу Excel
+                  </v-list-item-title></v-list-item
+                >
+              </v-list>
+            </v-card>
+          </v-menu> 
+        </div>
+      </v-card-title>
+      <v-row class="mx-0">
+        <v-col class="ma-0 pa-0" xs="12">
+          <v-data-table
+            ref="table"
+            id="table"
+            class="doc-template_data-table"
+            dense
+            style="width: 100%; height: 100%; border-radius: 10px"
+            fixed-header
+            :loading-text="$t('loadingText')"
+            :no-data-text="$t('noDataText')"
+            :height="screenHeight"
+            :loading="loading"
+            :headers="headers"
+            :items="items"
+            item-key="id"
+            :server-items-length="server_items_length"
+            :options.sync="dataTableOptions"
+            :disable-pagination="true"
+            :footer-props="{
+              itemsPerPageOptions: [20, 50, 100, -1],
+              itemsPerPageAllText: $t('itemsPerPageAllText'),
+              itemsPerPageText: $t('itemsPerPageText'),
+              showFirstLastPage: true,
+              firstIcon: 'mdi-arrow-collapse-left',
+              lastIcon: 'mdi-arrow-collapse-right',
+              prevIcon: 'mdi-arrow-left',
+              nextIcon: 'mdi-arrow-right',
+            }"
+            @update:sort-desc="updatePage"
+            @update:page="updatePage"
+            @update:items-per-page="updatePerPage"
+          >
+            <template v-slot:body.prepend="{ item }">
+              <tr class="prepend_height">
+                <td></td>
+                <td>
+                  <v-autocomplete
+                    clearable
+                    v-model="filter.device_type_id"
+                    :items="
+                      deviceTypes.map(v => ({
+                        text: v.type,
+                        value: v.id,
+                      }))
+                    "
+                    hide-details
+                    dense
+                    @change="getList"
+                  ></v-autocomplete>
+                </td>
+                <td>
+                  <v-text-field v-model="filter.model" hide-details dense @keyup.enter="getList"></v-text-field>
+                </td>
+                <td>
+                  <v-text-field
+                    v-model="filter.inventory_number"
+                    hide-details
+                    dense
+                    @keyup.enter="getList"
+                  ></v-text-field>
+                </td>
+                <td>
+                  <v-text-field
+                    v-model="filter.serial_number"
+                    hide-details
+                    dense
+                    @keyup.enter="getList"
+                  ></v-text-field>
+                </td>
+                <td>
+                  <v-autocomplete
+                    clearable
+                    v-model="filter.status"
+                    :items="
+                      statuses.map(v => ({
+                        text: v.text,
+                        value: v.value,
+                      }))
+                    "
+                    hide-details
+                    dense
+                    @change="getList"
+                  ></v-autocomplete>
+                </td>
+                <td>
+                  <v-text-field v-model="filter.tabel" hide-details dense @keyup.enter="getList"></v-text-field>
+                </td>
+                <td>
+                  <v-text-field
+                    v-model="filter.lastname_uz_latin"
+                    hide-details
+                    dense
+                    @keyup.enter="getList"
+                  ></v-text-field>
+                </td>
+                <td>
+                  <v-text-field
+                    v-model="filter.first_use_date"
+                    hide-details
+                    dense
+                    @keyup.enter="getList"
+                  ></v-text-field>
+                </td>
+                <td>
+                  <v-text-field v-model="filter.created_at" hide-details dense @keyup.enter="getList"></v-text-field>
+                </td>
+                <td>
+                  <v-text-field v-model="filter.username" hide-details dense @keyup.enter="getList"></v-text-field>
+                </td>
+                <td>
+                  <v-text-field v-model="filter.description" hide-details dense @keyup.enter="getList"></v-text-field>
+                </td>
+              </tr>
+            </template>
+            <template v-slot:item.id="{ item }">
+              {{
+              items
+              .map(function (x) {
+              return x.id;
+              })
+              .indexOf(item.id) + from
+              }}
+            </template>
+            <template v-slot:item.employee="{ item }">
+              <span v-if="$i18n.locale == 'uz_latin'">
+                {{ item.employee.lastname_uz_latin }}
+                {{ item.employee.firstname_uz_latin }}
+              </span>
+              <span v-else>
+                {{ item.employee.firstname_uz_cyril }}
+                {{ item.employee.lastname_uz_cyril }}
+              </span>
+            </template>
+            <template v-slot:item.created_at="{ item }">{{ item.created_at.slice(0, 10) }}</template>
+            <template v-slot:item.status="{ item }">
+              <template v-if="item.status == 1">Принимать</template>
+              <template v-else-if="item.status == 2">Отдавать</template>
+              <template v-else-if="item.status == 3">Ремонт</template>
+              <template v-else>Уничтожения</template>
+            </template>
+            <template v-slot:item.device_branch_id="{ item }">
+              <template v-if="item.device_branch_id == 1">Asaka</template>
+              <template v-else-if="item.device_branch_id == 2">Toshkent</template>
+              <template v-else-if="item.device_branch_id == 3">Xorazm</template>
+              <template v-else-if="item.device_branch_id == 4">Angren</template>
+            </template>
+          </v-data-table>
+        </v-col>
+      </v-row>
+    </v-card>
+    <v-dialog v-model="loading" width="300" hide-overlay>
+      <v-card color="primary" dark>
+        <v-card-text>
+          {{ $t("loadingText") }}
+          <v-progress-linear indeterminate color="white" class="mb-0"></v-progress-linear>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+  </div>
+</template>
+<script>
+import TableToExcel from "@linways/table-to-excel";
+const axios = require("axios").default;
+import Swal from "sweetalert2";
+export default {
+  data() {
+    return {
+      loading: false,
+      dialog: false,
+      editMode: null,
+      items: [],
+      employees: [],
+      devices: [],
+      deviceTypes: [],
+      form: {},
+      filter: {
+        device_id: "",
+        device_type_id: "",
+        model: "",
+        serial_number: "",
+        inventory_number: "",
+        status: "",
+        act_number: "",
+        first_use_date: "",
+        description: "",
+        created_at: "",
+        username: "",
+        department_code: "",
+        employee_department: "",
+        employee_position: "",
+        lastname_uz_latin: "",
+        tabel: ""
+      },
+      dialogHeaderText: "",
+      dataTableOptions: { page: 1, itemsPerPage: 20 },
+      page: 1,
+      from: 0,
+      server_items_length: -1,
+      createdAtMenu: false,
+      statuses: [
+        {
+          value: 1,
+          text: "Принимать"
+        },
+        {
+          value: 2,
+          text: "Отдавать"
+        },
+        {
+          value: 3,
+          text: "Ремонт"
+        },
+        {
+          value: 4,
+          text: "Уничтожения"
+        }
+      ],
+      deviceBranchs: [
+        {
+          value: 1,
+          text: "Asaka"
+        },
+        {
+          value: 2,
+          text: "Toshkent"
+        },
+        {
+          value: 3,
+          text: "Xorazm"
+        },
+        {
+          value: 4,
+          text: "Angren"
+        }
+      ]
+    };
+  },
+  computed: {
+    screenHeight() {
+      return window.innerHeight - 170;
+    },
+    headers() {
+      return [
+        { text: "#", value: "id", align: "center", width: 30 },
+        { text: this.$t("device.type"), value: "device.device_type.type" },
+        { text: this.$t("device.model"), value: "device.model" },
+        {
+          text: this.$t("device.inventory_number"),
+          value: "device.inventory_number"
+        },
+        {
+          text: this.$t("device.serial_number"),
+          value: "device.serial_number"
+        },
+        { text: this.$t("Status"), value: "status" },
+        { text: this.$t("Tabel"), value: "employee.tabel" },
+        {
+          text: this.$t("user.employee"),
+          value: "employee"
+        },
+        // { text: this.$t("user.department_code"), value: "department_code" },
+        // { text: this.$t("user.department_id"), value: "employee_department" },
+        // { text: this.$t("user.position"), value: "employee_position" },
+        // { text: this.$t("device.act_number"), value: "act_number" },
+        { text: this.$t("device.use_date"), value: "first_use_date" },
+        { text: this.$t("device.reg_date"), value: "created_at" },
+        { text: this.$t("device.user"), value: "created_by.username" },
+        { text: this.$t("description"), value: "description" },
+	{ text: this.$t("Filial"), value: "device_branch_id" }
+      ];
+    }
+  },
+  methods: {
+    changeStatus($event) {
+      if ($event != 1) {
+        this.form.employee_id = JSON.parse(
+          window.localStorage.getItem("user")
+        ).employee_id;
+        console.log(
+          JSON.parse(window.localStorage.getItem("user")).employee_id
+        );
+        this.changeEmployee(
+          JSON.parse(window.localStorage.getItem("user")).employee_id
+        );
+      } else {
+        this.form.employee_id = null;
+        this.form.department_code = null;
+        this.form.employee_position = null;
+        this.form.employee_department = null;
+      }
+    },
+    changeEmployee($event) {
+      this.loading = true;
+      axios
+        .get(
+          this.$store.state.backend_url +
+            "api/employees/get-employee-with-staff/" +
+            $event
+        )
+        .then(response => {
+          this.form.employee_department =
+            response.data.staff[0].department.name_uz_latin;
+          this.form.department_code =
+            response.data.staff[0].department.department_code;
+          this.form.employee_position =
+            response.data.staff[0].position.name_uz_latin;
+          this.loading = false;
+        })
+        .catch(error => {
+          console.log(error);
+        });
+    },
+    updatePage($event) {
+      this.getList();
+    },
+    updatePerPage($event) {
+      this.getList();
+    },
+    getRef() {
+      let locale = this.$i18n.locale;
+      locale = locale == "uz_latin" ? "uz_latin" : "uz_cyril";
+      axios
+        .get(
+          this.$store.state.backend_url +
+            "api/staff-criticals/get-ref/" +
+            locale
+        )
+        .then(response => {
+          this.employees = response.data.map(v => ({
+            value: v.id,
+            text:
+              v.tabel +
+              " " +
+              v["lastname_" + locale] +
+              " " +
+              (v["firstname_" + locale]
+                ? v["firstname_" + locale].substr(0, 1) + ". "
+                : "") +
+              " " +
+              (v["middlename_" + locale]
+                ? v["middlename_" + locale].substr(0, 1) + ". "
+                : "")
+          }));
+          this.loading = false;
+        })
+        .catch(error => {
+          console.log(error);
+        });
+    },
+    getRefDevice() {
+      axios
+        .get(
+          this.$store.state.backend_url +
+            "api/orgtex/device-histories/get-ref-device/" +
+            window.localStorage.getItem("device_branch_id")
+        )
+        .then(response => {
+          this.devices = response.data;
+          this.loading = false;
+        })
+        .catch(error => {
+          console.log(error);
+        });
+    },
+    getRefDeviceType() {
+      axios
+        .get(
+          this.$store.state.backend_url +
+            "api/orgtex/device-type/get-ref/" +
+            window.localStorage.getItem("device_branch_id")
+        )
+        .then(response => {
+          this.deviceTypes = response.data;
+          this.loading = false;
+        })
+        .catch(error => {
+          console.log(error);
+        });
+    },
+
+    getList() {
+      this.loading = true;
+      axios
+        .post(this.$store.state.backend_url + "api/orgtex/my-devices", {
+          pagination: this.dataTableOptions,
+          filter: this.filter,
+          device_branch_id: window.localStorage.getItem("device_branch_id")
+        })
+        .then(response => {
+          this.items = response.data.data;
+          this.server_items_length = response.data.total;
+          this.from = response.data.from;
+          this.loading = false;
+        })
+        .catch(error => {
+          console.log(error);
+          this.loading = false;
+        });
+    },
+    newItem() {
+      if (this.$store.getters.checkPermission("orgtex-admin")) {
+        this.dialogHeaderText = this.$t("device.add_history");
+        this.form = {
+          id: Date.now()
+        };
+        this.dialog = true;
+        this.editMode = false;
+        if (this.$refs.dialogForm) this.$refs.dialogForm.reset();
+      }
+    },
+    editItem(item) {
+      if (this.$store.getters.checkPermission("orgtex-admin")) {
+        this.dialogHeaderText = this.$t("edit");
+        this.formIndex = this.items.indexOf(item);
+        this.form = Object.assign({}, item);
+        this.dialog = true;
+        this.editMode = true;
+        if (this.$refs.dialogForm) this.$refs.dialogForm.resetValidation();
+      }
+    },
+    save() {
+      if (this.$refs.dialogForm.validate())
+        axios
+          .post(
+            this.$store.state.backend_url +
+              "api/orgtex/device-histories/update",
+            Object.assign(this.form, {
+              device_branch_id: window.localStorage.getItem("device_branch_id")
+            })
+          )
+          .then(res => {
+            this.getList();
+            this.dialog = false;
+            const Toast = Swal.mixin({
+              toast: true,
+              position: "top-end",
+              showConfirmButton: false,
+              timer: 3000,
+              timerProgressBar: true,
+              onOpen: toast => {
+                toast.addEventListener("mouseenter", Swal.stopTimer);
+                toast.addEventListener("mouseleave", Swal.resumeTimer);
+              }
+            });
+
+            Toast.fire({
+              icon: "success",
+              title: this.$t("create_update_operation")
+            });
+          })
+          .catch(err => {
+            console.log(err);
+          });
+    },
+    deleteItem(item) {
+      if (this.$store.getters.checkPermission("orgtex-admin")) {
+        const index = this.items.indexOf(item);
+        Swal.fire({
+          title: this.$t("swal_title"),
+          text: this.$t("swal_text"),
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#3085d6",
+          cancelButtonColor: "#d33",
+          confirmButtonText: this.$t("swal_delete")
+        }).then(result => {
+          if (result.value) {
+            axios
+              .delete(
+                this.$store.state.backend_url +
+                  "api/orgtex/device-histories/delete/" +
+                  item.id
+              )
+              .then(res => {
+                this.getList(this.page, this.itemsPerPage);
+                this.dialog = false;
+                Swal.fire("Deleted!", this.$t("swal_deleted"), "success");
+              })
+              .catch(err => {
+                Swal.fire({
+                  icon: "error",
+                  title: this.$t("swal_error_title"),
+                  text: this.$t("swal_error_text")
+                  //footer: "<a href>Why do I have this issue?</a>"
+                });
+                console.log(err);
+              });
+          }
+        });
+      }
+    },
+    tableToExcel(table, name) {
+      TableToExcel.convert(document.getElementById("table"));
+    }
+  },
+  mounted() {
+    this.getList();
+    this.getRef();
+    this.getRefDevice();
+    this.getRefDeviceType();
+  },
+  created() {}
+};
+</script>
+<style scoped>
+.fullHeight {
+  height: calc(100% - 0px);
+}
+.heightFull {
+  height: 100%;
+  background: #fff;
+}
+.headerTitle {
+  width: 100%;
+  color: #000;
+  font-size: 18px;
+  line-height: 1.4;
+  font-weight: 500;
+  font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.dialogTitle {
+  color: #000;
+  font-size: 16px;
+  line-height: 1.4;
+  font-weight: 500;
+  font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.labelTitle {
+  color: #676768;
+  font-size: 12px;
+  font-weight: 400;
+  font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.headerSearch {
+  width: 100%;
+  height: 34px;
+}
+.txt_search1 {
+  border: 1px solid #e6e6e6;
+  box-shadow: none;
+  max-height: 100%;
+  overflow: hidden;
+  border-radius: 5px 0px 0px 5px;
+  color: #212529;
+  font-size: 12px;
+  font-weight: 400;
+  font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.txt_searchBtn {
+  background: #ff9f0e;
+  border: 0.2px rgba(0, 0, 0, 0.28) solid;
+  box-shadow: none;
+  min-width: 25px !important;
+  height: 34px !important;
+  border-radius: 1px;
+  width: 25px;
+  padding: 0 13px;
+}
+.filterBtn {
+  color: #000;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  border: 1px solid #e6e6e6;
+  /* border-right: 0px; */
+  border-left: 0px;
+  background: #fff;
+  box-shadow: none;
+  border-radius: 0;
+  text-transform: none;
+}
+.v-data-table {
+  line-height: 13px !important;
+}
+.doc-template_data-table > .v-data-table__wrapper > table > tbody > tr > td {
+  color: #676768;
+  font-size: 12px;
+  font-weight: 400;
+  font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.dropdown-list .v-list-item .v-list-item__title {
+  color: #000;
+  font-size: 12px;
+  font-weight: 400;
+  font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.dialog-head_title {
+  color: #000;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.v-dialog > .v-card > .v-card__text {
+  padding: 0px 0px 0px 0px;
+}
+.doc-template_data-table table > tbody > tr > td {
+  white-space: normal;
+  max-width: 50px;
+  height: 43px;
+  margin: 0 auto;
+  font-size: 14px;
+  line-height: 1.4;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+</style>

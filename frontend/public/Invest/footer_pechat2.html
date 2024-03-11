@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<script>
+    window.onload = function() {
+        var vars = {};
+        var x = document.location.search.substring(1).split('&');
+        for (var i in x) {
+            var z = x[i].split('=', 2);
+            vars[z[0]] = z[1];
+        }
+        //if current page number == last page number, vars['topage']
+
+        var number=decodeURI(vars['number']).replace(/[_]/g,'/');
+        number=number.replace(/[probel]/g,' ');
+
+        if (vars['page'] == 1) {
+            document.querySelectorAll('.extra1')[0].textContent = number;
+            document.querySelectorAll('.extra3')[0].textContent = vars['day'];
+            document.querySelectorAll('.extra2')[0].textContent = vars['year'];
+            document.querySelectorAll('.extra4')[0].textContent = vars['month'];
+        }
+        else {
+            document.querySelectorAll('.extra')[0].textContent = '';
+            document.querySelectorAll('.extra2')[0].textContent = '';
+        }
+    };
+</script>
+
+<style>
+    .extra1, .extra2 {
+        margin-left:100px;
+    }
+</style>
+<div  class="extra">
+<img width="60%" style="margin-right:75px;float:right;filter:opacity(30%);" src="https://edo.uzavtosanoat.uz/img/pechat2.png">
+</div>
+<div class="extra1" style="position:absolute;top:12px;left:580px; width:210px;"></div>
+<div class="extra2" style="position:absolute;top:43px;left:540px;"></div>
+<div class="extra3" style="position:absolute;top:43px;left:705px;"></div>
+<div class="extra4" style="position:absolute;top:43px;left:730px;width:145px;"></div>
+
+<style>
+.extra1, .extra2, .extra3, .extra4{
+    font-size:18px;
+    text-align:center;
+    //border:1px solid red;
+}
+</style>

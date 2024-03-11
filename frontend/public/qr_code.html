@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<script>
+    window.onload = function() {
+        var vars = {};
+        var x = document.location.search.substring(1).split('&');
+        for (var i in x) {
+            var z = x[i].split('=', 2);
+            vars[z[0]] = z[1];
+        }
+        //if current page number == last page number, vars['topage']
+
+        var number=decodeURI(vars['number']).replace(/[_]/g,'/');
+
+        if (vars['page'] == 1) {
+            document.getElementById("qrCode").src = vars['data1'];
+            // document.querySelectorAll('.extra')[0].textContent = '<img style=" width="80" height="80" src="data:image/png;base64,' + vars['data1'] +'"/>';
+        }
+        else {
+            document.querySelectorAll('.extra')[0].textContent = '';
+        }
+    };
+</script>
+
+<div  class="extra" style="text-align: right; margin-right: 80px">
+    <img id="qrCode" width="80" height="80" src="https://edo.uzavtosanoat.uz/img/crop-cancel.png"/>
+</div>

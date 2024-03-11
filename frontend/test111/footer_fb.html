@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<script>
+    window.onload = function() {
+        var vars = {};
+        var x = document.location.search.substring(1).split('&');
+        for (var i in x) {
+            var z = x[i].split('=', 2);
+            vars[z[0]] = z[1];
+        }
+        //if current page number == last page number, vars['topage']
+
+        var isp=decodeURI(vars['data1']).replace(/[_]/g,' ');
+        //var data4=(decodeURI(vars['data4'])).replace(/[_]/g,' ');
+        var data4=decodeURI((vars['data4'])).replace(/rushotka/g,'#').replace(/plus/g,'+').replace(/[_]/g,' ').replace(/kuchuk/g,'@').replace(/ikkinuqta/g,':');
+        var data5=decodeURI(vars['data5']).replace(/[_]/g,' ');
+        var data6=vars['data6'];
+
+        if(vars['page'] == 1){
+            document.getElementById("img").classList.add('extra');
+        }
+        if (vars['page'] == vars['topage'] && vars['data1']) {
+            //document.querySelectorAll('.extra')[0].textContent = '';
+            var performer = '';
+            var phone = '';
+            switch(data6) {
+                case 'en':
+                    performer = 'Performer: ';
+                    phone = 'Phone: ';
+                    break;
+                case 'la':
+                    performer = 'Ijrochi: ';
+                    phone = 'Telefon: ';
+                    break;
+                case 'cy':
+                    performer = 'Ижрочи: ';
+                    phone = 'Телефон: ';
+                    break;
+                case 'ru':
+                    performer = 'Исполнитель: ';
+                    phone = 'Телефон: ';
+                    break;
+                default:
+                    performer = 'Исполнитель: ';
+                    phone = 'Телефон: ';
+            }
+            document.querySelectorAll('.extra1')[0].textContent = performer + isp;
+            document.querySelectorAll('.extra2')[0].textContent = phone + data4;
+        }
+        else {
+            //document.querySelectorAll('.extra')[0].textContent = '';
+            document.querySelectorAll('.extra1')[0].textContent = '';
+            document.querySelectorAll('.extra2')[0].textContent = '';
+        }
+    };
+</script>
+
+<style>
+    .extra1, .extra2 {
+        margin-left:100px;
+    }
+    .extra{
+        background-image: url('https://edo.uzautomotors.com/img/gm/bck_fb1.jpg');
+        background-repeat:no-repeat;
+        background-size:cover;
+        background-position:right bottom;
+        margin-left:-8px;
+        width:990px;
+        height:105px;
+    }
+</style>
+<div  id="img">
+
+</div>
+<div  class="extra1">
+    
+</div>
+<div  class="extra2">
+    
+</div>
